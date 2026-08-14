@@ -1,4 +1,807 @@
-<h1>First web page</h1>
-<a href="#">Best developer in the world</a>
-<button>Hello</button>
-<p>Test update!</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sleek Nigerian Meals</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        /* Strict adherence: No box-shadow */
+        * {
+            box-shadow: none !important;
+            font-family: 'Inter', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #111111;
+            overflow-x: hidden;
+        }
+
+        /* Hide scrollbar for sleekness */
+        ::-webkit-scrollbar {
+            width: 0px;
+            background: transparent;
+        }
+
+        /* Preloader Styles - Glassmorphic to liquid red fill */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background: #ffffff;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.6s ease-out;
+        }
+
+        .liquid-text {
+            font-size: 3.5rem;
+            font-weight: 900;
+            text-align: center;
+            letter-spacing: -0.05em;
+            color: rgba(0, 0, 0, 0.03);
+            -webkit-text-stroke: 1px rgba(0, 0, 0, 0.08);
+            /* SVG Wave Background */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000'%3E%3Cpath fill='%23FF2A2A' d='M0,500 Q250,350 500,500 T1000,500 L1000,1000 L0,1000 Z'/%3E%3C/svg%3E");
+            background-repeat: repeat-x;
+            background-size: 200% 200%;
+            background-position: 100% 200%;
+            -webkit-background-clip: text;
+            background-clip: text;
+            animation: liquidFill 3.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+            line-height: 1.1;
+        }
+
+        @keyframes liquidFill {
+            0% { background-position: 100% 200%; }
+            40% { background-position: 50% 100%; color: rgba(0,0,0,0.03); }
+            80% { background-position: 0% 0%; color: transparent; -webkit-text-stroke: 0px transparent; }
+            100% { background-position: -50% -10%; color: transparent; -webkit-text-stroke: 0px transparent; }
+        }
+
+        /* Blur Fade Scroll Animation */
+        .reveal-blur {
+            filter: blur(15px);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .reveal-blur.active {
+            filter: blur(0);
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* Slider Interactions */
+        #slider-thumb {
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #slider-thumb.dragging {
+            transition: none;
+        }
+
+        /* Responsive Modals & Cart (Bottom sheet mobile, Popup/Sidebar Desktop) */
+        .sheet-modal {
+            position: fixed;
+            z-index: 60;
+            background: #ffffff;
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            border: 1px solid #f0f0f0;
+        }
+
+        /* Meal Modal Specifics */
+        @media (max-width: 767px) {
+            #meal-modal {
+                inset: auto 0 0 0;
+                height: 85vh;
+                border-radius: 32px 32px 0 0;
+                transform: translateY(100%);
+            }
+            #meal-modal.open { transform: translateY(0); }
+            
+            #cart-sidebar {
+                inset: auto 0 0 0;
+                height: 85vh;
+                border-radius: 32px 32px 0 0;
+                transform: translateY(100%);
+            }
+            #cart-sidebar.open { transform: translateY(0); }
+        }
+        
+        @media (min-width: 768px) {
+            #meal-modal {
+                top: 50%; left: 50%;
+                width: 800px;
+                height: 460px;
+                border-radius: 32px;
+                transform: translate(-50%, -40%) scale(0.95);
+                opacity: 0;
+                pointer-events: none;
+            }
+            #meal-modal.open { 
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+                pointer-events: auto;
+            }
+
+            #cart-sidebar {
+                top: 0; right: 0;
+                width: 400px;
+                height: 100vh;
+                border-left: 1px solid #f0f0f0;
+                transform: translateX(100%);
+            }
+            #cart-sidebar.open { transform: translateX(0); }
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 40;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.5s ease;
+        }
+        .overlay.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Bus Spring Physics Animation */
+        .spring-bus-container {
+            display: none;
+            position: absolute;
+            inset: 0;
+            background: #ffffff;
+            z-index: 70;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+        .spring-bus-container.active {
+            display: flex;
+        }
+
+        .bus-icon {
+            transform-origin: bottom center;
+            opacity: 0;
+        }
+        
+        .spring-bus-container.active .bus-icon {
+            animation: busSpring 2.2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+        }
+        
+        .spring-bus-container.active .order-text {
+            animation: fadeInText 1s ease 1.2s forwards;
+            opacity: 0;
+        }
+
+        @keyframes busSpring {
+            0% { transform: scale(1) translateX(0); opacity: 0; }
+            15% { transform: scale(1) translateX(0); opacity: 1; }
+            35% { transform: scale(0.85) translateX(-30px) rotate(-4deg); opacity: 1; } /* Pull back */
+            70% { transform: scale(1.4) translateX(20px) rotate(2deg); opacity: 1; } /* Zoom forward */
+            100% { transform: scale(1.2) translateX(0) rotate(0); opacity: 1; } /* Settle */
+        }
+
+        @keyframes fadeInText {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Confetti Canvas */
+        #confetti-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 9998;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-[#FF2A2A] selection:text-white">
+
+    <div id="preloader">
+        <h1 class="liquid-text px-4 md:px-0 max-w-md">As e dey hot</h1>
+    </div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <!-- Global Overlay for Modals/Cart -->
+    <div id="global-overlay" class="overlay">
+        <!-- Cart Particles Canvas (Only active when cart is open) -->
+        <canvas id="cart-particles-canvas" class="w-full h-full absolute inset-0"></canvas>
+    </div>
+
+    <nav class="fixed top-0 w-full bg-white/80 backdrop-blur-md z-30 border-b border-gray-50">
+        <div class="max-w-6xl mx-auto px-6 h-20 flex items-center justify-between">
+            <div class="text-2xl font-bold tracking-tighter flex items-center gap-2">
+                <i class="ph ph-bowl-food text-[#FF2A2A]"></i>
+                <span>Naija<span class="text-[#FF2A2A]">Bites</span></span>
+            </div>
+            <button onclick="toggleCart()" class="relative p-2 rounded-full hover:bg-gray-50 transition-colors">
+                <i class="ph ph-shopping-bag text-2xl"></i>
+                <span id="cart-badge" class="absolute top-1 right-1 w-4 h-4 bg-[#FF2A2A] text-white text-[10px] font-bold rounded-full flex items-center justify-center opacity-0 transition-opacity">0</span>
+            </button>
+        </div>
+    </nav>
+
+    <main class="max-w-6xl mx-auto px-6 pt-32 pb-24">
+        <header class="mb-12 reveal-blur">
+            <h2 class="text-4xl md:text-5xl font-black tracking-tight mb-4">Hot & Ready</h2>
+            <p class="text-gray-400 text-lg">Authentic Nigerian flavors, prepared fresh.</p>
+        </header>
+
+        <div id="meal-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-8">
+            <!-- Meals will be injected here via JS -->
+        </div>
+    </main>
+
+    <div id="meal-modal" class="sheet-modal flex flex-col md:flex-row overflow-hidden">
+        <!-- Image Area (Top on mobile, Left on desktop) -->
+        <div id="modal-img-container" class="w-full h-56 md:h-full md:w-2/5 bg-gray-50 flex items-center justify-center relative overflow-hidden shrink-0 transition-colors duration-500">
+            <i class="ph ph-cooking-pot text-6xl text-gray-200"></i>
+            <img id="modal-img" src="" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity" alt="">
+        </div>
+
+        <!-- Content Area -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+            <div class="flex-1 overflow-y-auto p-6 md:p-8">
+                <!-- Mobile pull indicator -->
+                <div class="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mb-6 md:hidden"></div>
+                
+                <div class="flex justify-between items-start mb-6">
+                    <h3 id="modal-title" class="text-3xl font-black tracking-tight w-3/4">Meal Title</h3>
+                    <button onclick="closeMealModal()" class="p-2 bg-gray-50 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                        <i class="ph ph-x text-xl"></i>
+                    </button>
+                </div>
+                
+                <p id="modal-desc" class="text-gray-500 leading-relaxed mb-8">Description goes here.</p>
+                
+                <div class="flex items-center justify-between mb-8">
+                    <span class="text-sm font-medium text-gray-400 uppercase tracking-widest">Price</span>
+                    <span id="modal-price" class="text-2xl font-bold text-[#FF2A2A]">₦0</span>
+                </div>
+
+                <!-- Quantity Selector -->
+                <div class="flex items-center justify-between bg-gray-50 border border-gray-100 rounded-2xl p-2 mb-6">
+                    <span class="ml-4 text-sm font-medium text-gray-500">Quantity</span>
+                    <div class="flex items-center gap-4 bg-white rounded-xl border border-gray-100 p-1">
+                        <button onclick="updateQty(-1)" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 transition-colors"><i class="ph ph-minus"></i></button>
+                        <span id="modal-qty" class="font-bold w-4 text-center">1</span>
+                        <button onclick="updateQty(1)" class="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-gray-50 text-[#FF2A2A] transition-colors"><i class="ph ph-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sleek Pill Slider to Add to Cart -->
+            <div class="p-6 md:p-8 pt-0 border-t border-gray-50 shrink-0 bg-white z-10">
+                <div id="slider-container" class="relative w-full h-16 bg-gray-50 border border-gray-100 rounded-full flex items-center p-1.5 select-none overflow-hidden touch-none group">
+                    <div class="absolute inset-0 flex items-center justify-center text-sm font-semibold text-gray-400 z-0 pointer-events-none group-hover:text-gray-600 transition-colors">Slide to Add</div>
+                    
+                    <div id="slider-track" class="h-full bg-[#FF2A2A]/10 rounded-full absolute left-1.5 z-10 pointer-events-none" style="width: 52px;"></div>
+                    
+                    <div id="slider-thumb" class="w-[52px] h-[52px] bg-[#FF2A2A] rounded-full flex items-center justify-center text-white z-20 cursor-grab active:cursor-grabbing absolute left-1.5 shadow-none hover:bg-red-600 transition-colors">
+                        <i class="ph ph-arrow-right text-xl pointer-events-none"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="cart-sidebar" class="sheet-modal flex flex-col">
+        <!-- Main Cart View -->
+        <div id="cart-content" class="flex flex-col h-full">
+            <div class="p-6 md:p-8 border-b border-gray-50 flex justify-between items-center bg-white/80 backdrop-blur-sm z-10">
+                <h3 class="text-2xl font-black">Your Cart</h3>
+                <button onclick="toggleCart()" class="p-2 bg-gray-50 rounded-full text-gray-500 hover:bg-gray-100 transition-colors">
+                    <i class="ph ph-x text-xl"></i>
+                </button>
+            </div>
+            
+            <div id="cart-items" class="flex-1 overflow-y-auto p-6 md:p-8 space-y-6">
+                <!-- Cart items injected here -->
+                <div class="flex flex-col items-center justify-center h-full text-gray-300 gap-4">
+                    <i class="ph ph-shopping-cart text-5xl"></i>
+                    <p>Cart is empty</p>
+                </div>
+            </div>
+
+            <div class="p-6 md:p-8 border-t border-gray-50 bg-white">
+                <div class="mb-4">
+                    <input type="email" id="checkout-email" placeholder="Enter your email for receipt" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-300 transition-colors" required>
+                </div>
+                <div class="flex justify-between items-center mb-6">
+                    <span class="text-gray-400 font-medium">Total</span>
+                    <span id="cart-total" class="text-2xl font-bold">₦0</span>
+                </div>
+                <button onclick="processCheckout()" id="checkout-btn" class="w-full h-14 bg-black text-white rounded-2xl font-semibold flex items-center justify-center gap-2 transition-transform active:scale-95 disabled:opacity-50 disabled:active:scale-100 disabled:cursor-not-allowed">
+                    <span id="checkout-btn-text">Checkout</span> <i class="ph ph-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Checkout Success Animation Container -->
+        <div id="checkout-success" class="spring-bus-container rounded-t-[32px] md:rounded-none">
+            <div class="bus-icon text-[#FF2A2A] text-[100px]">
+                <i class="ph ph-van"></i>
+            </div>
+            <h3 class="order-text mt-8 text-2xl font-black text-center tracking-tight">Order on the way!</h3>
+            <p class="order-text text-gray-400 mt-2">Preparing your hot meal.</p>
+            <button onclick="resetCartAndClose()" class="order-text mt-10 px-8 py-3 bg-gray-50 border border-gray-100 rounded-full text-sm font-semibold hover:bg-gray-100 transition-colors">
+                Continue
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Meals Database
+        const meals = [
+            { id: 1, name: "Spicy Asun", price: 4500, desc: "Smoked, bite-sized goat meat tossed in fiery habanero, onions, and local spices. A true classic.", imgColor: "#FFEAE5" },
+            { id: 2, name: "Catfish Pepper Soup", price: 5000, desc: "Fresh premium catfish swimming in a spicy, light, aromatic broth infused with indigenous herbs.", imgColor: "#FFF1E5" },
+            { id: 3, name: "Smoky Fried Rice", price: 3500, desc: "Wok-tossed parboiled rice with mixed veggies, diced liver, and a subtle smoky essence.", imgColor: "#E5F7E8" },
+            { id: 4, name: "Beef Shawarma", price: 2500, desc: "Juicy shredded beef, sausages, and creamy garlic-mayo sauce wrapped tightly in soft flatbread.", imgColor: "#F5E5FF" },
+            { id: 5, name: "Party Jollof Rice", price: 4000, desc: "Authentic firewood-style Nigerian Jollof rice served with fried plantains and spicy roasted chicken.", imgColor: "#FFF0E5" },
+            { id: 6, name: "Pounded Yam & Egusi", price: 5500, desc: "Smooth, stretchy pounded yam paired with rich melon seed soup, assorted meats, and stockfish.", imgColor: "#F0F5E5" },
+            { id: 7, name: "Street Suya", price: 3000, desc: "Thinly sliced premium beef marinated in spicy peanut Yaji mix, roasted over open charcoal flames.", imgColor: "#FFE5EB" },
+            { id: 8, name: "Moi Moi Elewe", price: 1500, desc: "Steamed savory bean pudding wrapped in local leaves, packed with boiled egg and flaked fish.", imgColor: "#E5F5FF" }
+        ];
+
+        let cart = [];
+        let currentSelectedMeal = null;
+        let currentQty = 1;
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const preloader = document.getElementById('preloader');
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                    initScrollObserver();
+                }, 600);
+            }, 3600); // Wait for liquid animation to finish
+            
+            renderMeals();
+            setupSlider();
+            initCartParticles();
+        });
+
+        // Blur Fade Observer
+        function initScrollObserver() {
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                    }
+                });
+            }, { threshold: 0.1 });
+
+            document.querySelectorAll('.reveal-blur').forEach(el => observer.observe(el));
+        }
+
+        function renderMeals() {
+            const grid = document.getElementById('meal-grid');
+            grid.innerHTML = meals.map((meal, index) => `
+                <div class="reveal-blur group cursor-pointer border border-gray-100 rounded-3xl p-4 hover:border-gray-200 hover:bg-gray-50/50 transition-all duration-300 hover:-translate-y-1" style="transition-delay: ${index * 50}ms" onclick="openMealModal(${meal.id})">
+                    <div class="w-full h-64 rounded-2xl mb-6 flex items-center justify-center relative overflow-hidden transition-transform duration-500 group-hover:scale-[1.02]" style="background-color: ${meal.imgColor}">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/5 to-transparent"></div>
+                        <i class="ph ph-fire text-4xl text-black/10 group-hover:text-[#FF2A2A]/40 group-hover:scale-125 transition-all duration-500"></i>
+                    </div>
+                    <div class="px-2 pb-2">
+                        <div class="flex justify-between items-start mb-2">
+                            <h3 class="text-2xl font-bold tracking-tight group-hover:text-[#FF2A2A] transition-colors">${meal.name}</h3>
+                            <span class="text-lg font-medium text-gray-500">₦${meal.price.toLocaleString()}</span>
+                        </div>
+                        <p class="text-sm text-gray-400 line-clamp-2">${meal.desc}</p>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Re-trigger observer for new elements if preloader is gone
+            if(document.getElementById('preloader').style.display === 'none') {
+                 initScrollObserver();
+            }
+        }
+
+        function openMealModal(id) {
+            currentSelectedMeal = meals.find(m => m.id === id);
+            currentQty = 1;
+            
+            document.getElementById('modal-title').textContent = currentSelectedMeal.name;
+            document.getElementById('modal-desc').textContent = currentSelectedMeal.desc;
+            document.getElementById('modal-price').textContent = `₦${currentSelectedMeal.price.toLocaleString()}`;
+            document.getElementById('modal-qty').textContent = currentQty;
+            
+            const imgContainer = document.getElementById('modal-img-container');
+            imgContainer.style.backgroundColor = currentSelectedMeal.imgColor;
+
+            resetSlider();
+            
+            document.getElementById('global-overlay').classList.add('active');
+            document.getElementById('meal-modal').classList.add('open');
+        }
+
+        function closeMealModal() {
+            document.getElementById('meal-modal').classList.remove('open');
+            if(!document.getElementById('cart-sidebar').classList.contains('open')){
+                document.getElementById('global-overlay').classList.remove('active');
+            }
+            currentSelectedMeal = null;
+        }
+
+        function updateQty(change) {
+            currentQty += change;
+            if(currentQty < 1) currentQty = 1;
+            if(currentQty > 20) currentQty = 20;
+            document.getElementById('modal-qty').textContent = currentQty;
+            document.getElementById('modal-price').textContent = `₦${(currentSelectedMeal.price * currentQty).toLocaleString()}`;
+        }
+
+        function setupSlider() {
+            const container = document.getElementById('slider-container');
+            const thumb = document.getElementById('slider-thumb');
+            const track = document.getElementById('slider-track');
+            
+            let isDragging = false;
+            let startX = 0;
+            let currentX = 0;
+            let maxDrag = 0;
+            const thumbWidth = 52; // roughly w-13
+            const padding = 6; // left-1.5
+
+            function handleStart(e) {
+                if(!currentSelectedMeal) return;
+                isDragging = true;
+                startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                maxDrag = container.clientWidth - thumbWidth - (padding * 2);
+                thumb.classList.add('dragging');
+                track.style.transition = 'none';
+            }
+
+            function handleMove(e) {
+                if (!isDragging) return;
+                e.preventDefault(); // prevent scroll while sliding
+                let x = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                currentX = x - startX;
+                
+                if (currentX < 0) currentX = 0;
+                if (currentX > maxDrag) currentX = maxDrag;
+                
+                thumb.style.transform = `translateX(${currentX}px)`;
+                track.style.width = `${currentX + thumbWidth}px`;
+            }
+
+            function handleEnd(e) {
+                if (!isDragging) return;
+                isDragging = false;
+                thumb.classList.remove('dragging');
+                track.style.transition = 'width 0.2s cubic-bezier(0.16, 1, 0.3, 1)';
+                
+                if (currentX > maxDrag * 0.85) {
+                    // Success trigger
+                    thumb.style.transform = `translateX(${maxDrag}px)`;
+                    track.style.width = `${maxDrag + thumbWidth}px`;
+                    
+                    addToCart();
+                    
+                    setTimeout(() => {
+                        closeMealModal();
+                        setTimeout(resetSlider, 400);
+                    }, 300);
+                } else {
+                    resetSlider();
+                }
+            }
+
+            thumb.addEventListener('mousedown', handleStart);
+            document.addEventListener('mousemove', handleMove);
+            document.addEventListener('mouseup', handleEnd);
+
+            thumb.addEventListener('touchstart', handleStart, {passive: false});
+            document.addEventListener('touchmove', handleMove, {passive: false});
+            document.addEventListener('touchend', handleEnd);
+        }
+
+        function resetSlider() {
+            const thumb = document.getElementById('slider-thumb');
+            const track = document.getElementById('slider-track');
+            thumb.style.transform = `translateX(0px)`;
+            track.style.width = `52px`;
+        }
+
+        function addToCart() {
+            const existing = cart.find(i => i.id === currentSelectedMeal.id);
+            if(existing) {
+                existing.qty += currentQty;
+            } else {
+                cart.push({ ...currentSelectedMeal, qty: currentQty });
+            }
+            updateCartUI();
+            fireConfetti();
+        }
+
+        function updateCartUI() {
+            const badge = document.getElementById('cart-badge');
+            const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+            
+            if(totalQty > 0) {
+                badge.textContent = totalQty;
+                badge.style.opacity = '1';
+                document.getElementById('checkout-btn').disabled = false;
+            } else {
+                badge.style.opacity = '0';
+                document.getElementById('checkout-btn').disabled = true;
+            }
+
+            const itemsContainer = document.getElementById('cart-items');
+            if(cart.length === 0) {
+                itemsContainer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center h-full text-gray-300 gap-4 mt-10">
+                        <i class="ph ph-shopping-cart text-5xl"></i>
+                        <p>Cart is empty</p>
+                    </div>`;
+                document.getElementById('cart-total').textContent = '₦0';
+                return;
+            }
+
+            let total = 0;
+            itemsContainer.innerHTML = cart.map(item => {
+                total += item.price * item.qty;
+                return `
+                    <div class="flex items-center gap-4 bg-gray-50 p-4 rounded-2xl border border-gray-100">
+                        <div class="w-16 h-16 rounded-xl flex items-center justify-center shrink-0" style="background-color: ${item.imgColor}">
+                            <i class="ph ph-fire text-gray-300 text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-bold text-sm mb-1">${item.name}</h4>
+                            <div class="text-[#FF2A2A] font-semibold text-sm">₦${item.price.toLocaleString()}</div>
+                        </div>
+                        <div class="text-sm font-bold bg-white px-3 py-1.5 rounded-lg border border-gray-100">x${item.qty}</div>
+                    </div>
+                `;
+            }).join('');
+            
+            document.getElementById('cart-total').textContent = `₦${total.toLocaleString()}`;
+        }
+
+        let isCartOpen = false;
+        function toggleCart() {
+            const cartSidebar = document.getElementById('cart-sidebar');
+            const overlay = document.getElementById('global-overlay');
+            
+            isCartOpen = !isCartOpen;
+            
+            if(isCartOpen) {
+                closeMealModal(); // close meal modal if open
+                overlay.classList.add('active');
+                cartSidebar.classList.add('open');
+                startCartParticles();
+            } else {
+                cartSidebar.classList.remove('open');
+                overlay.classList.remove('active');
+                stopCartParticles();
+            }
+        }
+
+        async function processCheckout() {
+            if(cart.length === 0) return;
+            
+            const emailInput = document.getElementById('checkout-email');
+            const email = emailInput.value.trim();
+            const btn = document.getElementById('checkout-btn');
+            const btnText = document.getElementById('checkout-btn-text');
+
+            // Validate email
+            if(!email || !email.includes('@')) {
+                emailInput.classList.add('border-[#FF2A2A]');
+                setTimeout(() => emailInput.classList.remove('border-[#FF2A2A]'), 2000);
+                return;
+            }
+            
+            btn.disabled = true;
+            btnText.textContent = "Processing...";
+
+            try {
+                // Dynamically import the SDK module
+                const { initializeApp } = await import("https://storage.breacher.name.ng/sdk.js");
+                
+                const config = {
+                  workerUrl: "https://storage.breacher.name.ng",
+                  uid: "4CEkj2pK4YSwlUdABteCvS9DMpf2"
+                };
+
+                const app = initializeApp(config);
+
+                // Build HTML email content from Cart
+                const orderItemsHtml = cart.map(item => `<li style="margin-bottom: 12px; font-size: 16px;"><strong>${item.qty}x ${item.name}</strong> - ₦${(item.price * item.qty).toLocaleString()}</li>`).join('');
+                const totalStr = document.getElementById('cart-total').textContent;
+
+                // Send email
+                const mailResponse = await app.sendMail({
+                  to: email,
+                  subject: "Your NaijaBites Order is Confirmed!",
+                  aliasName: "NaijaBites Kitchen",
+                  from: "jvkechris@gmail.com",
+                  preview: "As e dey hot! We are preparing your meal.",
+                  html: `
+                    <div style="font-family: 'Inter', sans-serif; padding: 30px; background-color: #f9fafb; color: #111;">
+                      <div style="background-color: #ffffff; padding: 30px; border-radius: 16px; max-width: 500px; margin: 0 auto; border: 1px solid #f0f0f0;">
+                          <h1 style="color: #FF2A2A; margin-top: 0; font-size: 28px;">Order Confirmed! 🚀</h1>
+                          <p style="font-size: 16px; line-height: 1.5; color: #555;">Hello!</p>
+                          <p style="font-size: 16px; line-height: 1.5; color: #555;">Your hot, authentic Nigerian meal is being prepared. Here are your order details:</p>
+                          <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 24px 0;" />
+                          <ul style="list-style: none; padding: 0; margin: 0;">
+                              ${orderItemsHtml}
+                          </ul>
+                          <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 24px 0;" />
+                          <h2 style="margin: 0; font-size: 24px;">Total: <span style="color: #FF2A2A;">${totalStr}</span></h2>
+                          <p style="margin-top: 24px; font-size: 14px; color: #888;">We will notify you when it's out for delivery. Enjoy your meal!</p>
+                      </div>
+                    </div>
+                  `
+                });
+                console.log("Email sent successfully:", mailResponse);
+            } catch (err) {
+                console.error("Failed to send confirmation email:", err);
+            }
+
+            // Hide main cart content
+            document.getElementById('cart-content').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('cart-content').style.display = 'none';
+                
+                // Show success animation
+                const successContainer = document.getElementById('checkout-success');
+                successContainer.classList.add('active');
+                
+                // Reset button UI for future use
+                btn.disabled = false;
+                btnText.textContent = "Checkout";
+                emailInput.value = "";
+            }, 300);
+        }
+
+        function resetCartAndClose() {
+            cart = [];
+            updateCartUI();
+            
+            const successContainer = document.getElementById('checkout-success');
+            successContainer.classList.remove('active');
+            
+            document.getElementById('cart-content').style.display = 'flex';
+            document.getElementById('cart-content').style.opacity = '1';
+            
+            toggleCart();
+        }
+
+        function fireConfetti() {
+            const canvas = document.getElementById('confetti-canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            let particles = [];
+            // Spawn from bottom center roughly
+            const originX = window.innerWidth / 2;
+            const originY = window.innerHeight - 100;
+
+            for(let i=0; i<60; i++) {
+                particles.push({
+                    x: originX,
+                    y: originY,
+                    vx: (Math.random() - 0.5) * 25,
+                    vy: (Math.random() - 1.2) * 20, // shoot upwards
+                    size: Math.random() * 6 + 4,
+                    color: Math.random() > 0.3 ? '#FF2A2A' : '#ffffff',
+                    rot: Math.random() * 360,
+                    rotSpeed: (Math.random() - 0.5) * 10
+                });
+            }
+
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                let alive = false;
+                
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.vy += 0.6; // gravity
+                    p.rot += p.rotSpeed;
+                    
+                    if(p.y < canvas.height + 20) alive = true;
+                    
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate(p.rot * Math.PI / 180);
+                    ctx.fillStyle = p.color;
+                    
+                    // draw slight rectangles for sleek confetti
+                    if(p.color === '#ffffff') {
+                        ctx.strokeStyle = '#f0f0f0';
+                        ctx.lineWidth = 1;
+                        ctx.strokeRect(-p.size/2, -p.size/2, p.size, p.size*1.5);
+                    }
+                    ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size*1.5);
+                    ctx.restore();
+                });
+
+                if(alive) requestAnimationFrame(animate);
+                else ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            animate();
+        }
+
+        let pCanvas, pCtx, pParticles = [], pAnimId;
+        
+        function initCartParticles() {
+            pCanvas = document.getElementById('cart-particles-canvas');
+            pCtx = pCanvas.getContext('2d');
+            resizePCanvas();
+            window.addEventListener('resize', resizePCanvas);
+        }
+
+        function resizePCanvas() {
+            if(!pCanvas) return;
+            pCanvas.width = window.innerWidth;
+            pCanvas.height = window.innerHeight;
+            createParticles();
+        }
+
+        function createParticles() {
+            pParticles = [];
+            const count = window.innerWidth < 768 ? 30 : 60;
+            for(let i=0; i<count; i++) {
+                pParticles.push({
+                    x: Math.random() * pCanvas.width,
+                    y: Math.random() * pCanvas.height,
+                    r: Math.random() * 2 + 0.5,
+                    dx: (Math.random() - 0.5) * 0.3,
+                    dy: -Math.random() * 0.5 - 0.2, // float up
+                    alpha: Math.random() * 0.4 + 0.1
+                });
+            }
+        }
+
+        function startCartParticles() {
+            if(!pCanvas) return;
+            createParticles(); // reset positions
+            function animateP() {
+                pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+                pParticles.forEach(p => {
+                    p.x += p.dx;
+                    p.y += p.dy;
+                    
+                    // wrap around
+                    if(p.y < -10) p.y = pCanvas.height + 10;
+                    if(p.x < -10) p.x = pCanvas.width + 10;
+                    if(p.x > pCanvas.width + 10) p.x = -10;
+
+                    pCtx.beginPath();
+                    pCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    pCtx.fillStyle = `rgba(255, 42, 42, ${p.alpha})`; // hot red particles
+                    pCtx.fill();
+                });
+                pAnimId = requestAnimationFrame(animateP);
+            }
+            animateP();
+        }
+
+        function stopCartParticles() {
+            cancelAnimationFrame(pAnimId);
+            if(pCtx) pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+        }
+
+    </script>
+</body>
+</html>
